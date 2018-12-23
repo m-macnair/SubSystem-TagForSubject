@@ -53,6 +53,7 @@ sub _init {
 	
 =cut
 
+# TODO implement switch for 3d tags
 sub _update_subject {
 	my ( $self, $subject_id, $p ) = @_;
 
@@ -124,14 +125,11 @@ sub _get_set_id_for_subject_3d_tag_string {
 	
 =cut
 
-sub _assign_2d_tags {
+# TODO prevent duplicates
+
+sub _add_2d_tags {
 	my ( $self, $subject_id, $tag_ids, $p ) = @_;
 
-	$self->_preserve_sth( "subject_2d_tags.clear()", "delete from subject_2d_tags where subject_id = ?" ) unless $self->_preserve_sth( "subject_2d_tags.clear()" );
-
-	my $clear_sth = $self->_preserve_sth( "subject_2d_tags.clear()" );
-	$clear_sth->execute( $subject_id );
-	$self->_commit();
 	my $add_sth = $self->_subject_2d_tags_add_sth();
 
 	for ( @{$tag_ids} ) {
@@ -154,7 +152,20 @@ sub _subject_2d_tags_add_sth {
 
 sub _set_2d_tags {
 	my ( $self, $subject_id, $tag_ids, $p ) = @_;
-	die( 'not implemented' );
+
+	$self->_preserve_sth( "subject_2d_tags.clear()", "delete from subject_2d_tags where subject_id = ?" ) unless $self->_preserve_sth( "subject_2d_tags.clear()" );
+
+	my $clear_sth = $self->_preserve_sth( "subject_2d_tags.clear()" );
+	$clear_sth->execute( $subject_id );
+	$self->_commit();
+	my $add_sth = $self->_subject_2d_tags_add_sth();
+
+	for ( @{$tag_ids} ) {
+		$add_sth->execute( $subject_id, $_ );
+	}
+	$self->_commit();
+
+	return {pass => 1};
 }
 
 =head3 _set_2d_tags
@@ -175,41 +186,40 @@ sub _assign_3d_tags {
 	die( 'not implemented' );
 }
 
-# TODO do exception handling for DB when duplicate 
+# TODO do exception handling for DB when duplicate
 sub _new_subject {
-	my ( $self, $subject_id,$p ) = @_;
-	
-	
-	if($subject_id){
-		my $sth = $self->_preserve_sth( "subject.new_from_old()");
-		unless($sth) {
+	my ( $self, $subject_id, $p ) = @_;
+
+	if ( $subject_id ) {
+		my $sth = $self->_preserve_sth( "subject.new_from_old()" );
+		unless ( $sth ) {
 			$sth = $self->_preserve_sth( "subject.new_from_old()", "insert into subjects (id,has_2d,has_3d) values (?,?,?)" );
 		}
-		$sth->execute($subject_id,$p->{has_2d},$p->{has_3d});
+		$sth->execute( $subject_id, $p->{has_2d}, $p->{has_3d} );
 		return $self->_last_insert();
 	}
 
-	my $sth = $self->_preserve_sth( "subject.new()");
-	unless($sth) {
+	my $sth = $self->_preserve_sth( "subject.new()" );
+	unless ( $sth ) {
 		$sth = $self->_preserve_sth( "subject.new()", "insert into subjects (has_2d,has_3d) values (?,?)" );
 	}
 
-	$sth->execute($p->{has_2d},$p->{has_3d});
+	$sth->execute( $p->{has_2d}, $p->{has_3d} );
 	return $self->_last_insert();
 
 }
 
-# TODO cache 
-sub _get_subject { 
-	my ( $self, $subject_id,$p ) = @_;
+# TODO cache
+sub _get_subject {
+	my ( $self, $subject_id, $p ) = @_;
 
-	my $sth = $self->_preserve_sth( "subject.find_from_id()") || $self->_preserve_sth( "subject.find_from_id()", "select * from subjects where id = ?" );
-	$sth->execute($subject_id);
-	if(my $row = $sth->fetchrow_hashref()){
-		return { pass => 'href', href => $row };
+	my $sth = $self->_preserve_sth( "subject.find_from_id()" ) || $self->_preserve_sth( "subject.find_from_id()", "select * from subjects where id = ?" );
+	$sth->execute( $subject_id );
+	if ( my $row = $sth->fetchrow_hashref() ) {
+		return {pass => 'href', href => $row};
 	}
-	
-	return { fail => 'not_found', not_found => "Subject [$subject_id] not found"};
+
+	return {fail => 'not_found', not_found => "Subject [$subject_id] not found"};
 
 }
 

@@ -36,13 +36,13 @@ sub _init {
 	'The thing we want to do'
 =cut
 
-=head3 set_subject_2d_tags
+=head3 subject_2d_tags
 	Given an existing subject id and an arbitrarily separated tag string, 
 	split the string and pass to add_2d_tags as id and array ref of tag ids 
 
 =cut
 
-sub set_subject_2d_tags {
+sub subject_2d_tags {
 	my ( $self, $subject_id, $tag_string, $p ) = @_;
 
 	Carp::croak( "No subject_id provided" ) unless $subject_id;
@@ -57,7 +57,7 @@ sub set_subject_2d_tags {
 			$tag_map->{$_} = $tag_id;
 		}
 	}
-	$self->add_2d_tags( $subject_id, $tag_ids, $p );
+	$self->assign_2d_tags( $subject_id, $tag_ids, $p );
 	$self->update_subject(
 		$subject_id,
 		{
@@ -94,18 +94,18 @@ sub get_set_subject {
 	if ( $subject_id ) {
 
 		my $existing = $self->get_subject( $subject_id );
-		if ( $existing->{pass} ) { #'href' 
+		if ( $existing->{pass} ) { #'href'
 			return {
 				pass => $existing->{href}->{id},
 				old  => 1,
 			};
-		} elsif($existing->{fail} eq 'not_found') {
+		} elsif ( $existing->{fail} eq 'not_found' ) {
 			return {
 				pass => $self->new_subject( $subject_id, $p ),
 				new  => 1,
-			}
+			};
 		} else {
-			Carp::croak("Unhandled failure in get_subject : $existing->{ $existing->{fail} }");
+			Carp::croak( "Unhandled failure in get_subject : $existing->{ $existing->{fail} }" );
 		}
 	}
 
@@ -119,7 +119,7 @@ sub get_set_subject {
 sub get_subject {
 	my ( $self, $subject_id, $p ) = @_;
 	Carp::croak( "No subject_id provided" ) unless $subject_id;
-	return $self->_get_subject($subject_id, $p );
+	return $self->_get_subject( $subject_id, $p );
 }
 
 =head3 new_subject
@@ -212,7 +212,8 @@ sub get_set_id_for_subject_3d_tag_string {
 sub update_subject {
 	my ( $self, $subject_id, $p ) = @_;
 	Carp::croak( 'update_subject() without $subject_id' ) unless $subject_id;
-	return $self->_update_subject( $p );
+
+	return $self->_update_subject( $subject_id, $p );
 }
 
 =head3 update_subject_3d_tag
@@ -304,8 +305,16 @@ sub _add_2d_tags {
 	die( 'not implemented' );
 }
 
-
 =head3 _set_2d_tags
+	
+=cut
+
+sub _set_2d_tags {
+	my ( $self, $subject_id, $tag_ids, $p ) = @_;
+	die( 'not implemented' );
+}
+
+=head3 _remove_2d_tags
 	
 =cut
 
@@ -327,7 +336,6 @@ sub _get_set_id_for_subject {
 	my ( $self, $p ) = @_;
 	die( 'not implemented' );
 }
-
 
 =head3 _get_subject
 	

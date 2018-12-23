@@ -40,22 +40,34 @@ SQLITE: {
 	}
 
 	is( $obj->_get_set_id_for_2d_tag( "funky" ), 1 );
+	
+	
+
 	my $twelve_result = $obj->get_set_subject( 12 );
 	is( ref($twelve_result) , 'HASH' );
 	is( $twelve_result->{pass} , 12 );
+	
+
+	
 	
 	my $old_twelve_result = $obj->get_set_subject( 12 );
 	is( ref($old_twelve_result) , 'HASH' );
 	ok( $old_twelve_result->{old});
 	
-	my $bad_twelve_result = $obj->new_subject( 12 );
-	is( ref($bad_twelve_result) , 'HASH' );
-	ok( $bad_twelve_result->{fail});
 	
-	
-	ok( $obj->assign_2d_tags( 1, "funky fresh beats" ), 'Can assign 2d tags');
+	#writes to terminal for some reason but does the right 
+	dies_ok( sub { my $bad_twelve_result = $obj->new_subject( 12 ) });
 
-	
+	ok( $obj->subject_2d_tags( 12, "funky fresh beats" ), 'Can assign 2d tags');
+
+	#check if the subject has been updated with 'I have 2d tags'
+	my $check_sth = $obj->dbh->prepare("select * from subjects where id = 12");
+	$check_sth->execute();
+	if(my $row = $check_sth->fetchrow_hashref()){
+		is($row->{has_2d},1);
+	} else {
+		BAIL_OUT "DBH has gone (?!)";
+	}
 	
 }
 
